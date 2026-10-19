@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://Doris040512.github.io/sitemap.xml

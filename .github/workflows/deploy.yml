@@ -1,0 +1,45 @@
+name: Validate and deploy portfolio
+# Public deployment is opt-in: manually run after authorization and Pages setup.
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish to GitHub Pages (requires owner authorization)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    if: ${{ inputs.deploy }}
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
